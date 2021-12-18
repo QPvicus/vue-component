@@ -6,11 +6,13 @@ export interface TableContextProps {
 
 	getComponent: GetComponent
 
-	// scrollbarSize: number
+	scrollbarSize?: number
 
-	// direction: 'ltr' | 'rtl'
+	direction?: 'ltr' | 'rtl'
 
-	// isSticky: boolean
+	isSticky?: boolean
+
+	summaryCollect: (uniKey: string, fixed: boolean | string) => void
 }
 
 export const TableContextKey: InjectionKey<TableContextProps> =

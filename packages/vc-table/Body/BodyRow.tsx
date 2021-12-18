@@ -1,4 +1,4 @@
-import { defineComponent } from 'vue'
+import { computed, defineComponent } from 'vue'
 import { CustomizeComponent, GetRowKey, Key } from '../interface'
 import classNames from '../../_util/classNames'
 import { useInjectTable } from '../context/TableContext'
@@ -33,9 +33,19 @@ export default defineComponent<BodyRowProps<any>>({
 	setup(props, { attrs }) {
 		const tableContext = useInjectTable()
 		const bodyContext = useInjectBody()
-		const onClick = (event, ...args) => {
-			console.log(event, args)
-		}
+		const onClick = (event, ...args) => {}
+		const computedRowClassName = computed(() => {
+			const { record, index, indent } = props
+			console.log(record, index, indent)
+			const { rowClassName } = bodyContext
+			if (typeof rowClassName === 'string') {
+				return rowClassName
+			} else if (typeof rowClassName === 'function') {
+				return rowClassName(record, index, indent)
+			}
+			return ''
+		})
+		computedRowClassName.value
 		return () => {
 			const { class: className, style } = attrs
 			const { prefixCls } = tableContext
@@ -53,7 +63,8 @@ export default defineComponent<BodyRowProps<any>>({
 					class={classNames(
 						className,
 						`${prefixCls}-row`,
-						`${prefixCls}-row-level-${index}`
+						`${prefixCls}-row-level-${index}`,
+						computedRowClassName.value
 					)}
 					style={style}
 					onClick={onClick}
@@ -70,6 +81,7 @@ export default defineComponent<BodyRowProps<any>>({
 								class={columnClassName}
 								component={cellComponent}
 								prefixCls={prefixCls}
+								ellipsis={column.ellipsis}
 								dataIndex={dataIndex}
 								record={record}
 								customRender={customRender}

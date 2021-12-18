@@ -5,6 +5,7 @@ import Body from './Body'
 import ColGroup from './ColGroup'
 import { useProvideBody } from './context/BodyContext'
 import { useProvideTable } from './context/TableContext'
+import Footer from './Footer'
 import Header from './Header/Header'
 import useColumns from './hooks/useColumns'
 import {
@@ -46,6 +47,8 @@ export interface TableProps<RecordType = DefaultRecordType> {
 	customRow?: GetComponentProps<RecordType>
 	customHeaderRow?: GetComponentProps<readonly ColumnType<RecordType>[]>
 	indentSize?: number
+
+	direction?: 'ltr' | 'rtl'
 }
 
 export default defineComponent<TableProps<DefaultRecordType>>({
@@ -106,14 +109,27 @@ export default defineComponent<TableProps<DefaultRecordType>>({
 			columns: columns.value,
 			flattenColumns: flattenColumns.value
 		}))
-		// ====================
+		// ==================== Scroll =================
 		const fullTableRef = ref<HTMLDivElement>()
 		const scrollBodyRef = ref<HTMLDivElement>()
 
+		// Convert map to number width
 		const fixedHeader = computed(
 			() => props.scroll && validateValue(props.scroll.y)
 		)
+		// Sticky
 
+		const summaryFixedInfos = reactive<Record<string, boolean | string>>({})
+
+		const summaryCollect = (uniKey: string, fixed: boolean | string) => {
+			if (fixed) {
+				summaryFixedInfos[uniKey] = fixed
+			} else {
+				delete summaryFixedInfos[uniKey]
+			}
+		}
+
+		// TableLayout
 		const mergedTableLayout = computed(() => {
 			if (props.tableLayout) {
 				return props.tableLayout
@@ -128,7 +144,8 @@ export default defineComponent<TableProps<DefaultRecordType>>({
 		useProvideTable(
 			reactive({
 				...toRefs(reactivePick(props, 'prefixCls')),
-				getComponent
+				getComponent,
+				summaryCollect
 			})
 		)
 
@@ -154,10 +171,8 @@ export default defineComponent<TableProps<DefaultRecordType>>({
 
 		const bodyColGroup = () => (
 			<ColGroup
-				colWidths={(props.columns as ColumnType<any[]>[]).map(
-					({ width }) => width
-				)}
-				columns={props.columns as ColumnType<any>[]}
+				colWidths={flattenColumns.value.map(({ width }) => width)}
+				columns={flattenColumns.value}
 			/>
 		)
 
@@ -171,6 +186,7 @@ export default defineComponent<TableProps<DefaultRecordType>>({
 			} = props
 			const ariaProps = getDataAndAriaProps(attrs)
 			const TableComponent = getComponent(['table'], 'table')
+			const summaryNode = slots.summary?.({ pageData: mergedData.value })
 			let groupTableNode = () => null
 
 			// header props
@@ -182,6 +198,7 @@ export default defineComponent<TableProps<DefaultRecordType>>({
 			if (fixedHeader.value) {
 				return <h1>Fixed Header</h1>
 			} else {
+				// Unique Table
 				groupTableNode = () => (
 					<div class={classNames(`${prefixCls}-content`)} ref={scrollBodyRef}>
 						<TableComponent>
@@ -192,6 +209,11 @@ export default defineComponent<TableProps<DefaultRecordType>>({
 							)}
 							{bodyTable()}
 							{/* body Table */}
+							{summaryNode && (
+								<Footer flattenColumns={flattenColumns.value}>
+									{summaryNode}
+								</Footer>
+							)}
 						</TableComponent>
 					</div>
 				)

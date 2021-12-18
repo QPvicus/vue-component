@@ -18,6 +18,8 @@ export type AlignType = 'left' | 'center' | 'right'
 
 export type TableLayout = 'auto' | 'fixed'
 
+export type CellEllipsisType = { showTitle?: boolean } | boolean
+
 export type RowClassName<RecordType> = (
 	record: RecordType,
 	index: number,
@@ -48,6 +50,12 @@ export interface ColumnSharedType<RecordType> {
 	fixed?: FixedType
 	customHeaderCell?: GetComponentProps<ColumnsType<RecordType>[number]>
 	align?: AlignType
+	ellipsis?: CellEllipsisType
+
+	/**
+	 * @private Internal Usage
+	 */
+	__originColumn__?: any
 }
 
 export interface ColumnGroupType<RecordType>
@@ -59,7 +67,13 @@ export interface ColumnType<RecordType> extends ColumnSharedType<RecordType> {
 	colSpan?: number
 	dataIndex?: DataIndex
 	rowSpan?: number
-	customRender?: (opt: { value }) => any | RenderedCell<RecordType>
+	customRender?: (opt: {
+		value: any
+		text: any
+		record: RecordType
+		index: number
+		column: ColumnType<RecordType>
+	}) => any | RenderedCell<RecordType>
 	width?: number | string
 	minWidth?: number
 	maxWidth?: number
@@ -121,3 +135,10 @@ export type GetComponent = (
 	path: readonly string[],
 	defaultComponent?: CustomizeComponent
 ) => CustomizeComponent
+
+// Fix Columns
+export interface StickyOffsets {
+	left: readonly number[]
+	right: readonly number[]
+	isSticky?: boolean
+}
